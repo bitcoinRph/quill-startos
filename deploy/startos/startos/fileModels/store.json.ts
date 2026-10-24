@@ -61,6 +61,7 @@ const jitsiShape = z.object({
   announce: z.boolean().catch(true),
   maxMinutes: z.number().int().catch(defaultBotMaxMinutes),
   aloneMinutes: z.number().int().catch(defaultBotAloneMinutes),
+  iceAddressMap: z.array(z.string()).catch([]),
 })
 
 const retentionShape = z.object({

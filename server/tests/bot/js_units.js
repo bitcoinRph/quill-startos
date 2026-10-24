@@ -5,6 +5,7 @@ const path = require('path');
 const page = path.resolve(__dirname, '../../quill_server/bot/page');
 const { encodeFrame, decodeFrame, trackMessage } = require(path.join(page, 'protocol.js'));
 const { Resampler, toInt16 } = require(path.join(page, 'pcm-worklet.js'));
+const { rewriteCandidate, rewriteSdp, install } = require(path.join(page, 'ice-map.js'));
 
 const results = [];
 function test(name, fn) {
@@ -74,6 +75,69 @@ test('track registration message follows the spec', () => {
     type: 'track', track_id: 'p1', kind: 'participant', speaker: 'Alice', label: 'Alice',
     participant_id: 'p1', sample_rate: 16000,
   });
+});
+
+// ---- JVB media routing ------------------------------------------------------
+
+test('rewrites only the exact advertised ICE candidate address', () => {
+  const map = { '97.119.152.68': '10.0.3.1' };
+  const candidate = 'candidate:3 1 udp 1677724415 97.119.152.68 10000 typ srflx raddr 0.0.0.0 rport 9';
+  assert.strictEqual(
+    rewriteCandidate(candidate, map),
+    'candidate:3 1 udp 1677724415 10.0.3.1 10000 typ srflx raddr 0.0.0.0 rport 9',
+  );
+  assert.strictEqual(
+    rewriteCandidate('candidate:4 1 udp 1677724415 97.119.152.69 10000 typ srflx', map),
+    'candidate:4 1 udp 1677724415 97.119.152.69 10000 typ srflx',
+  );
+});
+
+test('rewrites JVB candidates inside SDP without changing other addresses', () => {
+  const map = { '97.119.152.68': '10.0.3.1' };
+  const sdp = [
+    'v=0',
+    'c=IN IP4 0.0.0.0',
+    'a=candidate:3 1 udp 1677724415 97.119.152.68 10000 typ srflx raddr 0.0.0.0 rport 9',
+    'a=candidate:4 1 udp 1677724415 203.0.113.8 443 typ relay',
+    '',
+  ].join('\r\n');
+  const out = rewriteSdp(sdp, map);
+  assert.ok(out.includes('a=candidate:3 1 udp 1677724415 10.0.3.1 10000 typ srflx'));
+  assert.ok(out.includes('c=IN IP4 0.0.0.0'));
+  assert.ok(out.includes('203.0.113.8 443 typ relay'));
+});
+
+test('installs wrappers, rewrites candidates, and preserves callback arguments', () => {
+  class FakePeerConnection {
+    setRemoteDescription(...args) { this.remoteArgs = args; return 'remote'; }
+    addIceCandidate(...args) { this.candidateArgs = args; return 'candidate'; }
+  }
+  const oldPeer = global.RTCPeerConnection;
+  const oldDescription = global.RTCSessionDescription;
+  const oldCandidate = global.RTCIceCandidate;
+  global.RTCPeerConnection = FakePeerConnection;
+  global.RTCSessionDescription = function (init) { Object.assign(this, init); };
+  global.RTCIceCandidate = function (init) { Object.assign(this, init); };
+  try {
+    install({ '97.119.152.68': '10.0.3.1' });
+    const pc = new FakePeerConnection();
+    const ok = () => {};
+    const fail = () => {};
+    assert.strictEqual(pc.setRemoteDescription({ type: 'offer', sdp: 'a=candidate:3 1 udp 1 97.119.152.68 10000 typ host' }, ok, fail), 'remote');
+    assert.ok(pc.remoteArgs[0].sdp.includes('10.0.3.1 10000'));
+    assert.strictEqual(pc.remoteArgs[1], ok);
+    assert.strictEqual(pc.remoteArgs[2], fail);
+    assert.strictEqual(pc.addIceCandidate({ candidate: 'candidate:3 1 udp 1 97.119.152.68 10000 typ host', sdpMid: '0' }, ok, fail), 'candidate');
+    assert.ok(pc.candidateArgs[0].candidate.includes('10.0.3.1 10000'));
+    assert.strictEqual(pc.candidateArgs[1], ok);
+    assert.strictEqual(pc.candidateArgs[2], fail);
+    pc.addIceCandidate(null);
+    assert.strictEqual(pc.candidateArgs[0], null);
+  } finally {
+    global.RTCPeerConnection = oldPeer;
+    global.RTCSessionDescription = oldDescription;
+    global.RTCIceCandidate = oldCandidate;
+  }
 });
 
 // ---- int16 ------------------------------------------------------------------

@@ -144,6 +144,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
     QUILL_BOT_ANNOUNCE: String(store.jitsi.announce),
     QUILL_BOT_MAX_MINUTES: String(store.jitsi.maxMinutes),
     QUILL_BOT_ALONE_MINUTES: String(store.jitsi.aloneMinutes),
+    QUILL_BOT_ICE_ADDRESS_MAP: store.jitsi.iceAddressMap.join(','),
     QUILL_AUDIO_RETENTION_DAYS: String(store.retention.audioDays),
     QUILL_COMPRESS_AUDIO: String(store.retention.compressAudio),
     QUILL_SPEAKER_NAME: store.profile.name,

@@ -7,6 +7,7 @@ looked up as an attribute first and as `QUILL_*` second.
 
 from __future__ import annotations
 
+import ipaddress
 import os
 import secrets
 from dataclasses import dataclass
@@ -37,6 +38,29 @@ def _number(value: Any, default: float) -> float:
         return default
 
 
+def _address_map(value: Any) -> tuple[tuple[str, str], ...]:
+    """Parse exact IPv4 rewrites: ``advertised=reachable`` pairs separated by commas."""
+    if value is None or (isinstance(value, str) and not value.strip()):
+        return ()
+    entries = value if isinstance(value, (list, tuple)) else str(value).split(",")
+    result: dict[str, str] = {}
+    for entry in entries:
+        left, sep, right = str(entry).strip().partition("=")
+        if not sep:
+            raise ValueError(f"invalid ICE address mapping {entry!r}; expected advertised=reachable")
+        try:
+            source = str(ipaddress.IPv4Address(left.strip()))
+            target = str(ipaddress.IPv4Address(right.strip()))
+        except ipaddress.AddressValueError as exc:
+            raise ValueError(f"invalid IPv4 address in ICE mapping {entry!r}") from exc
+        if source == target:
+            raise ValueError(f"ICE address mapping must change the address: {entry!r}")
+        if source in result:
+            raise ValueError(f"duplicate ICE source address: {source}")
+        result[source] = target
+    return tuple(result.items())
+
+
 @dataclass(frozen=True)
 class BotSettings:
     allowed_hosts: tuple[AllowedHost, ...] = ()
@@ -50,6 +74,7 @@ class BotSettings:
     chromium_path: str | None = None
     # Test-only: accept a self-signed Jitsi certificate. Never on by default.
     insecure_tls: bool = False
+    ice_address_map: tuple[tuple[str, str], ...] = ()
 
     @property
     def enabled(self) -> bool:
@@ -80,6 +105,7 @@ class BotSettings:
             max_concurrent=max(1, int(_number(pick("bot_max_concurrent", "QUILL_BOT_MAX_CONCURRENT"), DEFAULT_MAX_CONCURRENT))),
             chromium_path=(pick("chromium_path", "QUILL_CHROMIUM_PATH") or None),
             insecure_tls=_flag(pick("bot_insecure_tls", "QUILL_BOT_TEST_INSECURE_TLS"), False),
+            ice_address_map=_address_map(pick("bot_ice_address_map", "QUILL_BOT_ICE_ADDRESS_MAP")),
         )
 
 

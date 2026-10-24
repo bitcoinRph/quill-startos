@@ -1,18 +1,18 @@
 import { IMPOSSIBLE, VersionInfo } from '@start9labs/start-sdk'
 
 export const current = VersionInfo.of({
-  version: '0.1.3:0',
+  version: '0.1.4:0',
   releaseNotes: {
     en_US:
-      'First StartOS release of the Quill server: web UI, REST API and MCP endpoint, Parakeet v3 speech engine built in, Jitsi notetaker bot, browser recorder and file upload, with optional OpenWhispr and Ollama services.',
+      'Adds exact Jitsi media address mappings so a co-located notetaker can reach the local video bridge when the public address does not support NAT loopback.',
     es_ES:
-      'Primera versión de StartOS del servidor Quill: interfaz web, API REST y endpoint MCP, motor de voz Parakeet v3 integrado, bot de notas para Jitsi, grabadora en el navegador y subida de archivos, con servicios opcionales OpenWhispr y Ollama.',
+      'Añade mapeos exactos de direcciones multimedia de Jitsi para que un bot de notas en el mismo servidor alcance el puente de vídeo local cuando la dirección pública no admite bucle invertido NAT.',
     de_DE:
-      'Erste StartOS-Version des Quill-Servers: Weboberfläche, REST-API und MCP-Endpunkt, eingebaute Parakeet-v3-Spracherkennung, Jitsi-Notizen-Bot, Browser-Recorder und Datei-Upload, mit optionalen OpenWhispr- und Ollama-Diensten.',
+      'Fügt exakte Jitsi-Medienadresszuordnungen hinzu, damit ein Notizen-Bot auf demselben Server die lokale Video-Bridge erreicht, wenn die öffentliche Adresse kein NAT-Loopback unterstützt.',
     pl_PL:
-      'Pierwsze wydanie serwera Quill dla StartOS: interfejs webowy, API REST i punkt końcowy MCP, wbudowany silnik mowy Parakeet v3, bot do notatek dla Jitsi, rejestrator w przeglądarce i wgrywanie plików, z opcjonalnymi usługami OpenWhispr i Ollama.',
+      'Dodaje dokładne mapowania adresów multimediów Jitsi, aby bot do notatek na tym samym serwerze mógł dotrzeć do lokalnego mostu wideo, gdy adres publiczny nie obsługuje NAT loopback.',
     fr_FR:
-      'Première version StartOS du serveur Quill : interface web, API REST et point de terminaison MCP, moteur vocal Parakeet v3 intégré, bot de notes Jitsi, enregistreur dans le navigateur et import de fichiers, avec les services facultatifs OpenWhispr et Ollama.',
+      'Ajoute des mappages exacts d’adresses média Jitsi afin qu’un bot de notes hébergé sur le même serveur puisse atteindre le pont vidéo local lorsque l’adresse publique ne prend pas en charge le bouclage NAT.',
   },
   migrations: {
     up: async ({ effects }) => {},

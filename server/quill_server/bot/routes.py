@@ -21,6 +21,7 @@ ASSETS: dict[str, str] = {
     "bot.js": "text/javascript; charset=utf-8",
     "protocol.js": "text/javascript; charset=utf-8",
     "pipeline.js": "text/javascript; charset=utf-8",
+    "ice-map.js": "text/javascript; charset=utf-8",
     "pcm-worklet.js": "text/javascript; charset=utf-8",
 }
 

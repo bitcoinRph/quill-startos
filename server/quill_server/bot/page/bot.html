@@ -14,7 +14,7 @@
   // sibling assets, then hand over to bot.js (which loads the Jitsi files).
   (function () {
     var token = new URLSearchParams(location.search).get('internal') || '';
-    var files = ['protocol.js', 'pipeline.js', 'bot.js'];
+    var files = ['protocol.js', 'pipeline.js', 'ice-map.js', 'bot.js'];
     (function next() {
       var name = files.shift();
       if (!name) return;

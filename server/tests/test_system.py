@@ -220,13 +220,33 @@ def test_config_from_env_parses_everything():
     c = Config.from_env({
         "QUILL_DATA_DIR": "/d", "QUILL_PORT": "9000", "QUILL_ASR_ENGINE": "OpenAI", "QUILL_REMOTE_ASR_URL": "http://asr:8081/",
         "QUILL_JITSI_DOMAINS": "Meet.Example.com, jitsi.local ,", "QUILL_AUTO_NOTES": "true", "QUILL_BOT_ANNOUNCE": "false",
+        "QUILL_BOT_ICE_ADDRESS_MAP": "97.119.152.68=10.0.3.1",
         "QUILL_AUDIO_RETENTION_DAYS": "30", "QUILL_ASR_THREADS": "0", "QUILL_OWNER_EMAIL": "me@x.io",
         "QUILL_LLM_BASE_URL": "http://llm/v1/", "QUILL_LLM_MODEL": "m",
     })  # fmt: skip
     assert (c.port, c.asr_engine, c.remote_asr_url, c.auto_notes, c.bot_announce) == (9000, "openai", "http://asr:8081", True, False)
     assert c.jitsi_domains == ("meet.example.com", "jitsi.local") and c.audio_retention_days == 30
+    assert c.bot_ice_address_map == "97.119.152.68=10.0.3.1"
+    from quill_server.bot.settings import BotSettings
+    assert BotSettings.resolve(c).ice_address_map == (("97.119.152.68", "10.0.3.1"),)
     assert c.llm_base_url == "http://llm/v1" and c.llm_enabled and c.threads == min(4, os.cpu_count() or 1)
     assert Config.from_env({}).bot_announce is True and Config.from_env({}).session_secret != Config.from_env({}).session_secret
+
+
+def test_ice_address_map_rejects_ambiguous_or_invalid_entries():
+    import pytest
+    from quill_server.bot.settings import _address_map
+
+    assert _address_map(" 97.119.152.68 = 10.0.3.1 ") == (("97.119.152.68", "10.0.3.1"),)
+    for value in (
+        "097.119.152.68=10.0.3.1",
+        "97.119.152.68=010.0.3.1",
+        "97.119.152.68=97.119.152.68",
+        "97.119.152.68=10.0.3.1,97.119.152.68=10.0.3.2",
+        "not-a-map",
+    ):
+        with pytest.raises(ValueError):
+            _address_map(value)
 
 
 def test_bot_error_mapping():
