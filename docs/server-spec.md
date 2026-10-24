@@ -134,7 +134,7 @@ are `HttpOnly`, `SameSite=Strict`. Unauthenticated: `GET /health`,
 
 | Method | Path | Purpose |
 |---|---|---|
-| GET | `/health` | `{status, model_ready, engine, model, queue_depth, live_meetings}` |
+| GET | `/health` | `{status, model_ready, engine, model, queue_depth, live_meetings, model_download: {bytes, total} \| null, model_error: str \| null}` |
 | POST | `/api/v1/auth/login` / `logout` | admin password -> cookie |
 | GET | `/api/v1/meetings` | list; filters `q`, `status`, `source`, `folder_id`, `created_after`, `created_before` |
 | POST | `/api/v1/meetings` | create (`title`, `source`, `attendees`) -> meeting in `scheduled` |
