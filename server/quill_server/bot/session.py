@@ -158,7 +158,11 @@ class BotSession:
             self._page.on("console", lambda m: self.console.append(m.text))
             self._page.on("pageerror", lambda e: self.console.append(f"pageerror: {e}"))
             await self._context.expose_function("quillBotEvent", self._on_page_event)
-            secrets = {"password": self._password, "jwt": self.target.jwt}
+            secrets = {
+                "password": self._password,
+                "jwt": self.target.jwt,
+                "iceAddressMap": dict(self.settings.ice_address_map),
+            }
             await self._page.add_init_script(f"window.__quillSecrets = {json.dumps(secrets)};")
         except BaseException:
             await self.close_browser()

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from types import SimpleNamespace
 
 import pytest
@@ -106,6 +107,10 @@ def test_only_get():
 
 def test_every_page_script_exists_and_the_html_loads_them():
     html = (PAGE_DIR / "bot.html").read_text()
-    for name in ("protocol.js", "pipeline.js", "bot.js"):
-        assert name in html and (PAGE_DIR / name).is_file()
+    names = re.findall(r"['\"]([a-z0-9-]+\.js)['\"]", html)
+    assert names
+    for name in names:
+        assert name in ASSETS
+        assert (PAGE_DIR / name).is_file()
+        assert client().get(f"/bot/page/{name}?internal={TOKEN}").status_code == 200
     assert (PAGE_DIR / "pcm-worklet.js").is_file()

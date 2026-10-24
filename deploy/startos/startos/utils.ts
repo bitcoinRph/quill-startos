@@ -34,6 +34,8 @@ export const modelIdPattern = '^[A-Za-z0-9][A-Za-z0-9._:/-]*$'
 export const httpUrlPattern = '^https?://[^\\s]+$'
 export const hostPattern =
   '^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?(:[0-9]{1,5})?$'
+export const iceAddressMapPattern =
+  '^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])=(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$'
 
 export const normalizeHosts = (hosts: string[]): string[] => [
   ...new Set(hosts.map((host) => host.trim().toLowerCase()).filter(Boolean)),

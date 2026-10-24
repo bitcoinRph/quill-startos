@@ -6,6 +6,7 @@ import {
   defaultBotMaxMinutes,
   defaultBotName,
   hostPattern,
+  iceAddressMapPattern,
   normalizeHosts,
 } from '../utils'
 
@@ -74,6 +75,29 @@ export const inputSpec = InputSpec.of({
     integer: true,
     units: i18n('minutes'),
   }),
+  iceAddressMap: Value.list(
+    List.text(
+      {
+        name: i18n('Local Jitsi media address mappings'),
+        description: i18n(
+          'Optional exact mappings from a Jitsi bridge address advertised to browsers to the address reachable from Quill. Example: 203.0.113.10=10.0.3.1. Leave empty unless Quill and Jitsi share a server whose public address does not support NAT loopback.',
+        ),
+        default: [],
+        maxLength: 10,
+      },
+      {
+        placeholder: '203.0.113.10=10.0.3.1',
+        inputmode: 'text',
+        maxLength: 31,
+        patterns: [
+          {
+            regex: iceAddressMapPattern,
+            description: i18n('Enter two IPv4 addresses separated by =.'),
+          },
+        ],
+      },
+    ),
+  ),
 })
 
 export const configureJitsi = sdk.Action.withInput(
@@ -105,6 +129,7 @@ export const configureJitsi = sdk.Action.withInput(
         announce: input.announce,
         maxMinutes: input.maxMinutes,
         aloneMinutes: input.aloneMinutes,
+        iceAddressMap: input.iceAddressMap,
       },
     })
   },

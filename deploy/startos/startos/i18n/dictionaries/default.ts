@@ -109,6 +109,9 @@ const dict = {
   'The health endpoint is not reachable': 105,
   'Ollama service on this server (experimental)': 106,
   'An audio-capable model pulled in the Ollama service, for example gemma4:e2b or gemma4:e4b. Ollama returns text without word timings, and a language model can reword or invent speech: check important transcripts.': 107,
+  'Local Jitsi media address mappings': 108,
+  'Optional exact mappings from a Jitsi bridge address advertised to browsers to the address reachable from Quill. Example: 203.0.113.10=10.0.3.1. Leave empty unless Quill and Jitsi share a server whose public address does not support NAT loopback.': 109,
+  'Enter two IPv4 addresses separated by =.': 110,
 } as const
 
 /**

@@ -430,6 +430,7 @@ const earlyTracks = new Set(); // tracks seen before the ingest socket was open
     if (!params.internal || !params.meeting || !params.room) throw new Error('missing page parameters');
     if (!/^(\[[0-9a-f:.]+\]|[a-z0-9.-]+)(:\d{1,5})?$/i.test(params.host)) throw new Error('bad host parameter');
     const base = 'https://' + params.host;
+    if (window.QuillIceMap) window.QuillIceMap.install(secrets.iceAddressMap || {});
     // Same-version rule: the library and config come from the user's own server.
     await loadScript(base + '/config.js');
     await loadScript(base + '/libs/lib-jitsi-meet.min.js');

@@ -51,6 +51,7 @@ class Config:
     bot_announce: bool = True
     bot_max_minutes: int = 240
     bot_alone_minutes: int = 3
+    bot_ice_address_map: str = ""
     audio_retention_days: int = 0
     compress_audio: bool = True
     speaker_name: str = "Me"
@@ -104,6 +105,7 @@ class Config:
             bot_announce=_flag(e.get("QUILL_BOT_ANNOUNCE"), d.bot_announce),
             bot_max_minutes=_int(e.get("QUILL_BOT_MAX_MINUTES"), d.bot_max_minutes),
             bot_alone_minutes=_int(e.get("QUILL_BOT_ALONE_MINUTES"), d.bot_alone_minutes),
+            bot_ice_address_map=e.get("QUILL_BOT_ICE_ADDRESS_MAP", ""),
             audio_retention_days=_int(e.get("QUILL_AUDIO_RETENTION_DAYS"), 0),
             compress_audio=_flag(e.get("QUILL_COMPRESS_AUDIO"), d.compress_audio),
             speaker_name=e.get("QUILL_SPEAKER_NAME") or d.speaker_name,

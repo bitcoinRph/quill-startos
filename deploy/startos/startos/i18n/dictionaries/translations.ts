@@ -110,6 +110,9 @@ export default {
     105: 'No se puede acceder al endpoint de estado',
     106: 'Servicio Ollama en este servidor (experimental)',
     107: 'Un modelo con entrada de audio descargado en el servicio Ollama, por ejemplo gemma4:e2b o gemma4:e4b. Ollama devuelve texto sin tiempos por palabra, y un modelo de lenguaje puede reformular o inventar lo dicho: revisa las transcripciones importantes.',
+    108: 'Mapeos de direcciones multimedia locales de Jitsi',
+    109: 'Mapeos exactos opcionales entre una dirección del puente Jitsi anunciada a los navegadores y la dirección accesible desde Quill. Ejemplo: 203.0.113.10=10.0.3.1. Déjalo vacío salvo que Quill y Jitsi compartan un servidor sin bucle invertido NAT.',
+    110: 'Introduce dos direcciones IPv4 separadas por =.',
   },
   de_DE: {
     0: 'Erlaubte Jitsi-Server',
@@ -220,6 +223,9 @@ export default {
     105: 'Der Health-Endpunkt ist nicht erreichbar',
     106: 'Ollama-Dienst auf diesem Server (experimentell)',
     107: 'Ein audiofähiges Modell, das im Ollama-Dienst geladen ist, zum Beispiel gemma4:e2b oder gemma4:e4b. Ollama liefert Text ohne Zeitstempel pro Wort, und ein Sprachmodell kann Gesagtes umformulieren oder erfinden: Prüfen Sie wichtige Transkripte.',
+    108: 'Lokale Jitsi-Medienadresszuordnungen',
+    109: 'Optionale exakte Zuordnungen von einer für Browser angekündigten Jitsi-Bridge-Adresse zur von Quill erreichbaren Adresse. Beispiel: 203.0.113.10=10.0.3.1. Leer lassen, außer Quill und Jitsi teilen einen Server ohne NAT-Loopback.',
+    110: 'Geben Sie zwei durch = getrennte IPv4-Adressen ein.',
   },
   pl_PL: {
     0: 'Dozwolone serwery Jitsi',
@@ -330,6 +336,9 @@ export default {
     105: 'Punkt końcowy health jest niedostępny',
     106: 'Usługa Ollama na tym serwerze (eksperymentalnie)',
     107: 'Model obsługujący dźwięk pobrany w usłudze Ollama, na przykład gemma4:e2b lub gemma4:e4b. Ollama zwraca tekst bez znaczników czasu dla słów, a model językowy może przeformułować lub zmyślić wypowiedź: sprawdzaj ważne transkrypcje.',
+    108: 'Mapowania lokalnych adresów multimediów Jitsi',
+    109: 'Opcjonalne dokładne mapowania adresu mostu Jitsi ogłaszanego przeglądarkom na adres dostępny z Quill. Przykład: 203.0.113.10=10.0.3.1. Pozostaw puste, chyba że Quill i Jitsi współdzielą serwer bez NAT loopback.',
+    110: 'Wprowadź dwa adresy IPv4 oddzielone znakiem =.',
   },
   fr_FR: {
     0: 'Serveurs Jitsi autorisés',
@@ -440,5 +449,8 @@ export default {
     105: 'Le point de terminaison de santé est inaccessible',
     106: 'Service Ollama sur ce serveur (expérimental)',
     107: 'Un modèle capable de traiter l’audio, téléchargé dans le service Ollama, par exemple gemma4:e2b ou gemma4:e4b. Ollama renvoie du texte sans horodatage par mot, et un modèle de langage peut reformuler ou inventer des propos : vérifiez les transcriptions importantes.',
+    108: 'Mappages d’adresses média Jitsi locales',
+    109: 'Mappages exacts facultatifs entre une adresse de pont Jitsi annoncée aux navigateurs et l’adresse accessible depuis Quill. Exemple : 203.0.113.10=10.0.3.1. Laissez vide sauf si Quill et Jitsi partagent un serveur sans bouclage NAT.',
+    110: 'Saisissez deux adresses IPv4 séparées par =.',
   },
 } satisfies Record<string, LangDict>
