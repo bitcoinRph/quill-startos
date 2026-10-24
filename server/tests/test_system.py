@@ -249,3 +249,13 @@ def test_internal_token_may_only_stop(client):
     assert client.post("/api/v1/meetings", headers=internal, json={}).status_code == 401
     assert client.post(f"/api/v1/meetings/{mid}/stop", headers=internal).status_code == 202  # scheduled -> failed
     assert client.get(f"/api/v1/meetings/{mid}").json()["status"] == "failed"
+
+
+def test_failed_bot_marks_its_scheduled_meeting_failed(client):
+    state = state_of(client)
+    mid = client.post("/api/v1/meetings", json={"title": "Bot"}).json()["id"]
+    state._on_bot_state({"meeting_id": mid, "state": "joined", "error": None})
+    assert client.get(f"/api/v1/meetings/{mid}").json()["status"] == "scheduled"
+    state._on_bot_state({"meeting_id": mid, "state": "failed", "error": "lobby denied"})
+    body = client.get(f"/api/v1/meetings/{mid}").json()
+    assert (body["status"], body["error"]) == ("failed", "lobby denied")

@@ -148,13 +148,20 @@ class AppState:
             self._bot_checked = True
             try:
                 manager = importlib.import_module("quill_server.bot.manager")
-                try:
-                    self.bot = manager.BotManager(self.config, self.hub, create_meeting=self.hub.create_meeting)
-                except TypeError:  # a manager without the optional hook
-                    self.bot = manager.BotManager(self.config, self.hub)
+                self.bot = manager.BotManager(
+                    self.config, self.hub, create_meeting=self.hub.create_meeting, on_state=self._on_bot_state
+                )
             except Exception as exc:
                 log.warning("Jitsi bot unavailable: %s", exc)
         return self.bot
+
+    def _on_bot_state(self, info: dict[str, Any]) -> None:
+        """A bot that ends before any audio arrived leaves its meeting scheduled; mark it failed."""
+        if info.get("state") not in ("failed", "ended"):
+            return
+        row = self.meetings.row(info["meeting_id"])
+        if row is not None and row["status"] == "scheduled":
+            self.meetings.fail(row["id"], info.get("error") or "the bot left before any audio was captured")
 
     def bot_state(self, meeting_id: str) -> dict[str, Any] | None:
         """State and error of the bot attached to a meeting, if any."""

@@ -71,6 +71,10 @@ Runtime dependencies (pin exact versions in `pyproject.toml`):
 | `QUILL_AUDIO_RETENTION_DAYS` | `0` | delete audio (keep transcripts) after N days; 0 = keep |
 | `QUILL_COMPRESS_AUDIO` | `true` | transcode finished WAV segments to Opus |
 | `QUILL_SPEAKER_NAME` | `Me` | label for the browser mic track |
+| `QUILL_OWNER_EMAIL` | (empty) | note owner email in the Granola-compatible API |
+| `QUILL_BOT_MAX_CONCURRENT` | `3` | most bots in meetings at once |
+| `QUILL_CHROMIUM_PATH` | (empty) | Chromium binary for the bot; empty = Playwright's own |
+| `QUILL_BOT_TEST_INSECURE_TLS` | `false` | tests only: accept a self-signed Jitsi certificate; never set in production |
 
 ## 3. Models
 
