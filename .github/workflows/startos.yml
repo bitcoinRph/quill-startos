@@ -1,0 +1,183 @@
+name: StartOS package
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "deploy/startos/**"
+      - "server/**"
+      - ".github/workflows/startos.yml"
+  push:
+    branches: [release]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build the ${{ matrix.target }} package
+    defaults:
+      run:
+        working-directory: deploy/startos
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86
+            runner: ubuntu-latest
+          - target: arm
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up the StartOS build environment
+        uses: Start9Labs/start-technologies/.github/actions/setup-build-env@master
+
+      - name: Provision a workspace signing key
+        run: |
+          start-cli init-key
+          mkdir -p ../../.startos
+          cp ~/.startos/id.key.pem ../../.startos/build.key.pem
+
+      - name: Install the package's dependencies
+        run: npm ci
+
+      - name: Build the ${{ matrix.target }} package
+        run: make ${{ matrix.target }}
+
+      - name: Upload the package
+        uses: actions/upload-artifact@v4
+        with:
+          name: quill_${{ matrix.target }}
+          path: deploy/startos/*.s9pk
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+
+  release:
+    name: Publish the .s9pk to a GitHub Release
+    needs: build
+    if: github.ref == 'refs/heads/release'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download the built packages
+        uses: actions/download-artifact@v4
+        with:
+          pattern: quill_*
+          merge-multiple: true
+          path: dist
+
+      - name: Read the package version
+        id: version
+        run: |
+          set -euo pipefail
+
+          file=deploy/startos/startos/versions/current.ts
+          version=$(sed -n "s/^[[:space:]]*version: '\([^']*\)'.*/\1/p" "$file" | head -1)
+
+          if ! printf '%s' "$version" | grep -qE '^[0-9]+(\.[0-9]+)*:[0-9]+$'; then
+            echo "$file does not carry a readable version; found '$version'" >&2
+            exit 1
+          fi
+
+          {
+            echo "version=$version"
+            echo "slug=${version//:/-}"
+            echo "tag=startos-v${version//:/-}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Name the files after the version
+        env:
+          SLUG: ${{ steps.version.outputs.slug }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          cd dist
+
+          built=(*.s9pk)
+
+          if [ "${#built[@]}" -ne 2 ]; then
+            echo "expected one .s9pk per architecture, found ${#built[@]}" >&2
+            ls -l >&2
+            exit 1
+          fi
+
+          for file in "${built[@]}"; do
+            arch=${file#quill_}
+            mv "$file" "quill_${SLUG}_${arch}"
+          done
+
+          sha256sum *.s9pk > checksums.txt
+          ls -l
+
+      - name: Write the release notes
+        env:
+          SLUG: ${{ steps.version.outputs.slug }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          {
+            printf 'Download the file for your server, open your StartOS device in a browser, '
+            printf 'then click **Sideload** in the top navigation bar and select it.\n\n'
+            printf '| Your server | Download |\n'
+            printf '| --- | --- |\n'
+            printf '| Intel or AMD, and any x86 machine | `quill_%s_x86_64.s9pk` |\n' "$SLUG"
+            printf '| Raspberry Pi, Start9 Server Pure and Server One, and any ARM machine | `quill_%s_aarch64.s9pk` |\n' "$SLUG"
+            printf '\nAfter it installs, run the **Set Admin Password** action, then start the service, wait for the speech model to download (about 490 MB) and open the Web UI.\n'
+            printf 'The full setup is in [instructions.md](https://github.com/%s/blob/release/deploy/startos/instructions.md).\n\n' "$GITHUB_REPOSITORY"
+            printf '## About this build\n\n'
+            printf '| | |\n| --- | --- |\n'
+            printf '| Package version | `%s` |\n' "$VERSION"
+            printf '| Built from | %s |\n' "$GITHUB_SHA"
+            printf '| Run | [%s](https://github.com/%s/actions/runs/%s) |\n' "$GITHUB_RUN_ID" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"
+            printf '\nVerify a download against `checksums.txt`:\n\n'
+            printf '```sh\nsha256sum -c checksums.txt --ignore-missing\n```\n\n'
+            printf 'StartOS installs a package only when its version is higher than the installed one. '
+            printf 'Merging again without raising `version` in `deploy/startos/startos/versions/current.ts` '
+            printf 'fails publication rather than replacing an existing release.\n'
+          } > notes.md
+
+          cat notes.md
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          title="Quill $VERSION for StartOS"
+
+          releases=$(gh api --paginate "repos/$GH_REPO/releases" --jq ".[] | select(.tag_name == \"$TAG\") | .id")
+          tags=$(gh api "repos/$GH_REPO/git/matching-refs/tags/$TAG" --jq ".[] | select(.ref == \"refs/tags/$TAG\") | .ref")
+          if [ -n "$releases" ] || [ -n "$tags" ]; then
+            printf 'Refusing to replace existing release or tag %s\n' "$TAG" >&2
+            exit 1
+          fi
+
+          gh release create "$TAG" dist/*.s9pk dist/checksums.txt \
+            --target "$GITHUB_SHA" --title "$title" --notes-file notes.md --draft --latest=false
+          release_id=$(gh api --paginate "repos/$GH_REPO/releases" --jq ".[] | select(.tag_name == \"$TAG\") | .id")
+          if ! [[ "$release_id" =~ ^[0-9]+$ ]]; then
+            printf 'Expected exactly one new release for %s\n' "$TAG" >&2
+            exit 1
+          fi
+          gh api --method PATCH "repos/$GH_REPO/releases/$release_id" \
+            -F draft=false -F prerelease=false -f make_latest=false
+
+          url="https://github.com/$GH_REPO/releases/tag/$TAG"
+          echo "Published [$title]($url)." >> "$GITHUB_STEP_SUMMARY"
