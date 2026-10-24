@@ -4,6 +4,7 @@ import {
   defaultBotAloneMinutes,
   defaultBotMaxMinutes,
   defaultBotName,
+  defaultOllamaAsrModel,
   defaultRemoteAsrModel,
   defaultSpeakerName,
 } from '../utils'
@@ -12,6 +13,7 @@ export const transcriptionEngines = [
   'parakeet-v3',
   'parakeet-v2',
   'openwhispr',
+  'ollama',
   'custom',
 ] as const
 
@@ -20,6 +22,10 @@ export const notesSources = ['none', 'ollama', 'custom'] as const
 const openwhisprShape = z.object({
   token: z.string().catch(''),
   model: z.string().catch(defaultRemoteAsrModel),
+})
+
+const ollamaAsrShape = z.object({
+  model: z.string().catch(defaultOllamaAsrModel),
 })
 
 const customAsrShape = z.object({
@@ -32,6 +38,7 @@ const transcriptionShape = z.object({
   engine: z.enum(transcriptionEngines).catch('parakeet-v3'),
   threads: z.number().int().min(0).max(64).catch(0),
   openwhispr: openwhisprShape.catch(() => openwhisprShape.parse({})),
+  ollama: ollamaAsrShape.catch(() => ollamaAsrShape.parse({})),
   custom: customAsrShape.catch(() => customAsrShape.parse({})),
 })
 

@@ -361,8 +361,12 @@ browsers for tab audio, and in all current browsers for mic-only.
   announce, limits), `configure-retention`.
 - Health checks: `ui` (port 8080) and `model` (`/health` `model_ready`,
   `loading` while downloading).
-- Optional dependencies: `openwhispr` (remote engine), `ollama` (notes LLM),
-  both resolved with `sdk.host.getBridgeAddress` when selected.
+- Optional dependencies: `openwhispr` (remote engine), `ollama` (notes LLM,
+  and an experimental remote engine), both resolved with
+  `sdk.host.getBridgeAddress` when selected. Ollama's
+  `/v1/audio/transcriptions` (v0.20.0 and later) prompts an audio-capable
+  chat model and returns `{"text"}` only: one segment per VAD cut, no word
+  timings, and the risk that a language model rewords or invents speech.
 
 ## 11. Agent skills
 

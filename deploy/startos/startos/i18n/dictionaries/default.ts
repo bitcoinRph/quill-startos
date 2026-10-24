@@ -63,7 +63,7 @@ const dict = {
   'CPU threads': 59,
   'Threads for the built-in engines. 0 chooses automatically: the smaller of 4 and the number of CPUs.': 60,
   'Configure Transcription': 61,
-  'Choose the speech engine: built-in Parakeet, the OpenWhispr service, or another OpenAI-compatible server.': 62,
+  'Choose the speech engine: built-in Parakeet, the OpenWhispr service, the Ollama service (experimental), or another OpenAI-compatible server.': 62,
   'Get API Credentials': 63,
   'Show the service API key, the MCP URL and ready-made commands to connect Claude Code or any MCP client.': 64,
   'No API key has been generated yet': 65,
@@ -107,6 +107,8 @@ const dict = {
   'Downloading the speech model on first start (about 490 MB)': 103,
   'Downloading the speech model: ${percent}%': 104,
   'The health endpoint is not reachable': 105,
+  'Ollama service on this server (experimental)': 106,
+  'An audio-capable model pulled in the Ollama service, for example gemma4:e2b or gemma4:e4b. Ollama returns text without word timings, and a language model can reword or invent speech: check important transcripts.': 107,
 } as const
 
 /**

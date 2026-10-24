@@ -68,7 +68,7 @@ One daemon, `ui`, runs the image's own entrypoint (`sdk.useEntrypoint()`, `pytho
 | Configure Retention | `QUILL_AUDIO_RETENTION_DAYS`, `QUILL_COMPRESS_AUDIO` |
 | Configure Profile | `QUILL_SPEAKER_NAME`, `QUILL_OWNER_EMAIL` |
 
-Engine mapping: built-in Parakeet v3 sets `QUILL_ASR_ENGINE=parakeet` and the v3 model id; Parakeet v2 sets the v2 id. The OpenWhispr service and a custom server set `QUILL_ASR_ENGINE=openai`. For OpenWhispr, `QUILL_REMOTE_ASR_URL` is `http://<bridge address>` of OpenWhispr's `ui-multi` host, port 8081 (resolved with `sdk.host.getBridgeAddress`), and the key is the token the user pasted. For the Ollama notes source, `QUILL_LLM_BASE_URL` is `http://<bridge address of ollama api-multi:11434>/v1`.
+Engine mapping: built-in Parakeet v3 sets `QUILL_ASR_ENGINE=parakeet` and the v3 model id; Parakeet v2 sets the v2 id. The OpenWhispr service, the Ollama service and a custom server set `QUILL_ASR_ENGINE=openai`. For OpenWhispr, `QUILL_REMOTE_ASR_URL` is `http://<bridge address>` of OpenWhispr's `ui-multi` host, port 8081 (resolved with `sdk.host.getBridgeAddress`), and the key is the token the user pasted. For Ollama transcription, `QUILL_REMOTE_ASR_URL` is `http://<bridge address of ollama api-multi:11434>`, the key is empty and `QUILL_REMOTE_ASR_MODEL` is the model tag; Ollama's `/v1/audio/transcriptions` (added in Ollama v0.20.0) prompts an audio-capable chat model and returns `{"text"}` only, so Quill gets one segment per VAD cut and no word timings. For the Ollama notes source, `QUILL_LLM_BASE_URL` is `http://<bridge address of ollama api-multi:11434>/v1`.
 
 Upstream's own settings in the web app (API keys, webhooks, templates, folders) are untouched and live in `quill.db`.
 
@@ -91,7 +91,7 @@ Reachability (LAN, domain, Tor) is the user's choice on the Interfaces tab. The 
 | Set Admin Password (`set-admin-password`) | Set or reset the web sign-in password; also the install task | Any status | Optional password (min 12; generated when empty) | Password, masked |
 | Get API Credentials (`get-api-credentials`) | Show the service API key, MCP URL, REST URL, a Claude Code command and a generic MCP JSON snippet | Any status | none | Masked and copyable values |
 | Rotate API Key (`rotate-api-key`) | Replace the service API key | Any status | none | New key, masked |
-| Configure Transcription (`configure-transcription`) | Engine: Parakeet v3, Parakeet v2, OpenWhispr (token, model), custom OpenAI-compatible (URL, key, model); CPU threads | Any status | Union form | none |
+| Configure Transcription (`configure-transcription`) | Engine: Parakeet v3, Parakeet v2, OpenWhispr (token, model), Ollama (model id, experimental), custom OpenAI-compatible (URL, key, model); CPU threads | Any status | Union form | none |
 | Configure Notes LLM (`configure-notes-llm`) | None, Ollama (model id) or custom (base URL, key, model); automatic notes | Any status | Union form, toggle | none |
 | Configure Jitsi Bot (`configure-jitsi`) | Allowed hosts (empty disables the bot), bot name, announce toggle, maximum minutes, alone minutes | Any status | List, text, toggle, numbers | none |
 | Configure Retention (`configure-retention`) | Audio retention days (0 keeps), compress audio | Any status | Number, toggle | none |
@@ -119,7 +119,7 @@ Both are optional and declared as running requirements only while selected:
 | Package | Selected by | Used for |
 | --- | --- | --- |
 | `openwhispr` (health check `whisper`, `>=0.1.9:0`) | Configure Transcription: OpenWhispr | Remote `/v1/audio/transcriptions` engine |
-| `ollama` (health check `primary`, `>=0.34.0:0`) | Configure Notes LLM: Ollama | OpenAI-compatible `/v1` notes LLM |
+| `ollama` (health check `primary`, `>=0.34.0:0`) | Configure Notes LLM: Ollama, or Configure Transcription: Ollama | OpenAI-compatible `/v1` notes LLM, experimental `/v1/audio/transcriptions` engine |
 
 Quill cannot read another package's store, so the OpenWhispr token is pasted by the user.
 

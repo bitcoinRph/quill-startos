@@ -10,6 +10,8 @@ export const secretCharset = 'a-z,A-Z,0-9'
 export const defaultAsrModel = 'parakeet-tdt-0.6b-v3-int8'
 export const englishAsrModel = 'parakeet-tdt-0.6b-v2-int8'
 export const defaultRemoteAsrModel = 'whisper-1'
+// Ollama's own transcription tests use this model (integration/reg_fast_test.go).
+export const defaultOllamaAsrModel = 'gemma4:e2b'
 
 export const defaultSpeakerName = 'Me'
 export const defaultBotName = 'Quill Notetaker'

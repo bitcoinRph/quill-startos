@@ -11,7 +11,8 @@ export const setDependencies = sdk.setupDependencies(async ({ effects }) => {
   const store = await storeJson.read().const(effects)
 
   const useOpenwhispr = store?.transcription.engine === 'openwhispr'
-  const useOllama = store?.notes.source === 'ollama'
+  const useOllama =
+    store?.notes.source === 'ollama' || store?.transcription.engine === 'ollama'
 
   return {
     ...(useOpenwhispr && {

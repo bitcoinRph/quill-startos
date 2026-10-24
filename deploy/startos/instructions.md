@@ -45,6 +45,10 @@ The REST API lives at `/api/v1` on the same address, with an OpenAPI document at
 
 - **OpenWhispr** transcribes in 99 languages instead of the built-in engine's 25 European ones. Install OpenWhispr, run its **Get API Credentials** action, then run Quill's **Configure Transcription**, choose **OpenWhispr service**, and paste the token. Quill cannot read the token from another service. StartOS then shows OpenWhispr as a running dependency of Quill.
 - **Ollama** can write notes with a local model. Install Ollama and pull a model in it, then run **Configure Notes LLM**, choose **Ollama service** and enter the exact model tag. Turn on **Write notes automatically** to generate notes when a transcript is ready.
+- **Ollama transcription (experimental).** Ollama 0.20 and later can transcribe with an audio-capable model. Pull one in Ollama first, for example `gemma4:e2b` or `gemma4:e4b`. Then run **Configure Transcription**, choose **Ollama service (experimental)** and enter the model tag. Read these limits before you use it:
+  - Ollama returns text only. Quill keeps the timing of each speech segment, but not of each word.
+  - A language model writes the text. It can reword, skip or invent speech, and the audio itself can steer it. Check important transcripts.
+  - On a server without a GPU it is usually much slower than the built-in engine.
 - **Configure Transcription** also offers Parakeet v2 (English only) and any other OpenAI-compatible transcription server. A server outside your network receives your audio.
 - **Configure Notes LLM** also accepts any OpenAI-compatible chat server. A remote one receives your transcripts.
 

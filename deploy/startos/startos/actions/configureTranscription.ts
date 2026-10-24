@@ -1,7 +1,12 @@
 import { storeJson } from '../fileModels/store.json'
 import { i18n } from '../i18n'
 import { sdk } from '../sdk'
-import { defaultRemoteAsrModel, httpUrlPattern } from '../utils'
+import {
+  defaultOllamaAsrModel,
+  defaultRemoteAsrModel,
+  httpUrlPattern,
+  modelIdPattern,
+} from '../utils'
 
 const { InputSpec, Value, Variants } = sdk
 
@@ -37,6 +42,28 @@ const engineVariants = Variants.of({
         masked: true,
       }),
       model: remoteModel,
+    }),
+  },
+  ollama: {
+    name: i18n('Ollama service on this server (experimental)'),
+    spec: InputSpec.of({
+      model: Value.text({
+        name: i18n('Model ID'),
+        description: i18n(
+          'An audio-capable model pulled in the Ollama service, for example gemma4:e2b or gemma4:e4b. Ollama returns text without word timings, and a language model can reword or invent speech: check important transcripts.',
+        ),
+        required: true,
+        default: defaultOllamaAsrModel,
+        maxLength: 200,
+        patterns: [
+          {
+            regex: modelIdPattern,
+            description: i18n(
+              'Must start with a letter or number and contain only letters, numbers, dots, underscores, colons, slashes and hyphens.',
+            ),
+          },
+        ],
+      }),
     }),
   },
   custom: {
@@ -97,7 +124,7 @@ export const configureTranscription = sdk.Action.withInput(
   async () => ({
     name: i18n('Configure Transcription'),
     description: i18n(
-      'Choose the speech engine: built-in Parakeet, the OpenWhispr service, or another OpenAI-compatible server.',
+      'Choose the speech engine: built-in Parakeet, the OpenWhispr service, the Ollama service (experimental), or another OpenAI-compatible server.',
     ),
     warning: null,
     allowedStatuses: 'any',
@@ -113,16 +140,18 @@ export const configureTranscription = sdk.Action.withInput(
     const engine =
       t.engine === 'openwhispr'
         ? { selection: t.engine, value: t.openwhispr }
-        : t.engine === 'custom'
-          ? {
-              selection: t.engine,
-              value: {
-                url: t.custom.url,
-                key: t.custom.key || null,
-                model: t.custom.model,
-              },
-            }
-          : { selection: t.engine, value: {} }
+        : t.engine === 'ollama'
+          ? { selection: t.engine, value: { model: t.ollama.model } }
+          : t.engine === 'custom'
+            ? {
+                selection: t.engine,
+                value: {
+                  url: t.custom.url,
+                  key: t.custom.key || null,
+                  model: t.custom.model,
+                },
+              }
+            : { selection: t.engine, value: {} }
     return { engine, threads: t.threads }
   },
 
@@ -139,6 +168,14 @@ export const configureTranscription = sdk.Action.withInput(
             token: engine.value.token.trim(),
             model: engine.value.model.trim(),
           },
+        },
+      })
+    } else if (engine.selection === 'ollama') {
+      await storeJson.merge(effects, {
+        transcription: {
+          ...base,
+          engine: 'ollama',
+          ollama: { model: engine.value.model.trim() },
         },
       })
     } else if (engine.selection === 'custom') {

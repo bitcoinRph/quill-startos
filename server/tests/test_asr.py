@@ -54,6 +54,23 @@ def test_openai_engine_posts_verbose_json_and_uses_segments():
     assert [(u.start_ms, u.end_ms, u.text) for u in out] == [(0, 1500, "Hallo"), (1500, 2000, "Welt")]
 
 
+def test_ollama_text_only_response_becomes_one_segment_per_cut():
+    """Ollama's /v1/audio/transcriptions answers ``{"text"}`` only, even for verbose_json."""
+    seen = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen["url"] = str(request.url)
+        seen["auth"] = request.headers.get("authorization")
+        seen["model"] = b'name="model"\r\n\r\ngemma4:e2b' in request.content
+        return httpx.Response(200, json={"text": "Hello there.\n"})
+
+    engine = OpenAIEngine("http://172.18.0.1:11434", "", "gemma4:e2b",
+                          client=httpx.Client(transport=httpx.MockTransport(handler)))  # fmt: skip
+    out = engine.transcribe(np.zeros(SAMPLE_RATE * 3, dtype=np.float32))
+    assert seen == {"url": "http://172.18.0.1:11434/v1/audio/transcriptions", "auth": None, "model": True}
+    assert out == [Utterance(0, 3000, "Hello there.", [])]
+
+
 def test_openai_engine_single_segment_fallback_and_errors():
     ok = OpenAIEngine("http://x", client=httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(200, json={"text": " hi "}))))
     out = ok.transcribe(np.zeros(SAMPLE_RATE, dtype=np.float32))

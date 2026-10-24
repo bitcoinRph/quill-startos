@@ -53,6 +53,15 @@ export const main = sdk.setupMain(async ({ effects }) => {
 
   const { transcription, notes } = store
 
+  const ollamaBridge = () =>
+    sdk.host
+      .getBridgeAddress(effects, {
+        packageId: ollamaPackageId,
+        hostId: ollamaHostId,
+        internalPort: ollamaPort,
+      })
+      .const()
+
   const asr: Record<string, string> = {}
   if (transcription.engine === 'parakeet-v3') {
     asr.QUILL_ASR_ENGINE = 'parakeet'
@@ -80,6 +89,16 @@ export const main = sdk.setupMain(async ({ effects }) => {
     asr.QUILL_REMOTE_ASR_URL = `http://${bridge}`
     asr.QUILL_REMOTE_ASR_KEY = transcription.openwhispr.token
     asr.QUILL_REMOTE_ASR_MODEL = transcription.openwhispr.model
+  } else if (transcription.engine === 'ollama') {
+    const bridge = await ollamaBridge()
+    if (!bridge)
+      throw new Error(
+        'Transcription is set to Ollama but the Ollama service is not reachable. Install and start Ollama, or choose another engine in Configure Transcription.',
+      )
+    asr.QUILL_ASR_ENGINE = 'openai'
+    asr.QUILL_REMOTE_ASR_URL = `http://${bridge}`
+    asr.QUILL_REMOTE_ASR_KEY = ''
+    asr.QUILL_REMOTE_ASR_MODEL = transcription.ollama.model
   } else {
     if (!transcription.custom.url)
       throw new Error(
@@ -93,13 +112,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
 
   const llm: Record<string, string> = {}
   if (notes.source === 'ollama') {
-    const bridge = await sdk.host
-      .getBridgeAddress(effects, {
-        packageId: ollamaPackageId,
-        hostId: ollamaHostId,
-        internalPort: ollamaPort,
-      })
-      .const()
+    const bridge = await ollamaBridge()
     if (!bridge)
       throw new Error(
         'Notes are set to Ollama but the Ollama service is not reachable. Install and start Ollama, or choose another source in Configure Notes LLM.',
