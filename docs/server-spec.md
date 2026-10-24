@@ -375,3 +375,23 @@ a full long transcript twice.
 - `quill-follow-up`: turn notes into follow-up emails, tasks and CRM updates.
 - `quill-setup`: connect Claude Code, Codex, Hermes Agent and OpenClaw to the
   MCP endpoint.
+
+## 12. Roadmap
+
+Phase 1 is sections 1 to 11. The items below come after it, in priority
+order. Items marked *(Speakr)* are ideas taken from
+[Speakr](https://github.com/murtaza-nasir/speakr) (reviewed 2026.10.24).
+Speakr is AGPL-3.0, so Quill reuses its ideas only, never its code.
+
+| # | Item | Notes |
+|---|---|---|
+| 1 | Ask across meetings in the web UI *(Speakr "Inquire")* | Chat over search hits with cited timestamps, through the configured LLM. Agents already do this over MCP. |
+| 2 | Prompts per folder and per tag *(Speakr)* | A folder or tag selects the note template. Several tags stack their instructions in a fixed order. |
+| 3 | Speaker diarization for single-track uploads | sherpa-onnx speaker diarization (pyannote segmentation 3.0 ONNX + speaker embedding), CPU, no Hugging Face token. Fills `diarization_label`. |
+| 4 | Speaker library with voice profiles *(Speakr)* | Store speaker embeddings, suggest names for new meetings. Needs item 3. |
+| 5 | Sharing and public links *(Speakr)* | Read-only links per meeting with expiry, view or edit rights, revocable. |
+| 6 | Multiple users and single sign-on *(Speakr)* | Local users, then OIDC. Granola `owner` and `attribution` follow the user. |
+| 7 | More exports and auto-export *(Speakr)* | `.docx` export, and auto-export of notes and transcripts as Markdown to a folder (for example an Obsidian vault). |
+| 8 | Calendar auto-join | Read an ICS or CalDAV feed, send the bot to Jitsi links at the start time, fill `calendar_event`. |
+| 9 | Jigasi transcription backend | Accept per-participant audio from a Jigasi in Jitsi's Skynet streaming protocol, as an alternative to the bot. |
+| 10 | Tags and retention policies per folder *(Speakr)* | Retention by folder or tag, not only globally. |
