@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<title>Quill notetaker bot</title>
+<style>body{font:14px system-ui,sans-serif;margin:1rem;color:#222}</style>
+</head>
+<body>
+<p>Quill notetaker bot: <span id="status">starting</span></p>
+<script>
+  // The internal token travels in this page's query string; reuse it for the
+  // sibling assets, then hand over to bot.js (which loads the Jitsi files).
+  (function () {
+    var token = new URLSearchParams(location.search).get('internal') || '';
+    var files = ['protocol.js', 'pipeline.js', 'bot.js'];
+    (function next() {
+      var name = files.shift();
+      if (!name) return;
+      var s = document.createElement('script');
+      s.src = '/bot/page/' + name + '?internal=' + encodeURIComponent(token);
+      s.onload = next;
+      s.onerror = function () {
+        document.getElementById('status').textContent = 'failed: could not load ' + name;
+        if (window.quillBotEvent) window.quillBotEvent({ type: 'state', state: 'failed', error: 'could not load ' + name });
+      };
+      document.head.appendChild(s);
+    })();
+  })();
+</script>
+</body>
+</html>

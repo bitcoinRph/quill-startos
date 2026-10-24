@@ -1,0 +1,89 @@
+name: Server tests
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "server/**"
+      - "docs/server-spec.md"
+      - ".github/workflows/server-tests.yml"
+  push:
+    paths:
+      - "server/**"
+      - "docs/server-spec.md"
+      - ".github/workflows/server-tests.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pytest:
+    name: pytest (Python 3.12)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      QUILL_MODELS_DIR: ${{ github.workspace }}/.quill-models
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: server/pyproject.toml
+
+      - name: Install system packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg libsndfile1
+
+      # The key names the pinned SHA-256 prefixes from docs/server-spec.md
+      # section 3. Change it when a model in that table changes. The tests
+      # also read test_wavs/en.wav from the same archive.
+      - name: Cache the speech models
+        id: models
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.QUILL_MODELS_DIR }}
+          key: quill-models-parakeet-v3-5793d0fd-silero-9e2449e1-testwav
+
+      - name: Download and verify the speech models
+        if: steps.models.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          base=https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models
+          model=sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8
+          work=$(mktemp -d)
+          mkdir -p "$QUILL_MODELS_DIR/parakeet-tdt-0.6b-v3-int8"
+
+          curl -fsSL --retry 3 -o "$work/silero_vad.onnx" "$base/silero_vad.onnx"
+          echo "9e2449e1087496d8d4caba907f23e0bd3f78d91fa552479bb9c23ac09cbb1fd6  $work/silero_vad.onnx" | sha256sum -c -
+          mv "$work/silero_vad.onnx" "$QUILL_MODELS_DIR/silero_vad.onnx"
+
+          curl -fsSL --retry 3 -o "$work/$model.tar.bz2" "$base/$model.tar.bz2"
+          echo "5793d0fd397c5778d2cf2126994d58e9d56b1be7c04d13c7a15bb1b4eafb16bf  $work/$model.tar.bz2" | sha256sum -c -
+          tar -xjf "$work/$model.tar.bz2" -C "$QUILL_MODELS_DIR/parakeet-tdt-0.6b-v3-int8" \
+            --strip-components=1 --wildcards \
+            '*/encoder.int8.onnx' '*/decoder.int8.onnx' '*/joiner.int8.onnx' '*/tokens.txt' \
+            '*/test_wavs/en.wav'
+          ls -l "$QUILL_MODELS_DIR" "$QUILL_MODELS_DIR/parakeet-tdt-0.6b-v3-int8"
+
+      - name: Install the server
+        run: pip install -e "server[dev]"
+
+      # The bot tests drive a real headless Chromium through Playwright.
+      - name: Install Chromium for the bot tests
+        run: python -m playwright install --with-deps chromium
+
+      - name: Download the Granola OpenAPI document
+        continue-on-error: true
+        run: |
+          curl -fsSL --retry 3 -o "$RUNNER_TEMP/granola-openapi.json" https://docs.granola.ai/api-reference/openapi.json
+          jq -e . "$RUNNER_TEMP/granola-openapi.json" > /dev/null
+          echo "GRANOLA_OPENAPI=$RUNNER_TEMP/granola-openapi.json" >> "$GITHUB_ENV"
+
+      - name: Run the tests
+        run: python -m pytest server/tests
