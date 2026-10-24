@@ -41,13 +41,14 @@ jobs:
           sudo apt-get install -y --no-install-recommends ffmpeg libsndfile1
 
       # The key names the pinned SHA-256 prefixes from docs/server-spec.md
-      # section 3. Change it when a model in that table changes.
+      # section 3. Change it when a model in that table changes. The tests
+      # also read test_wavs/en.wav from the same archive.
       - name: Cache the speech models
         id: models
         uses: actions/cache@v4
         with:
           path: ${{ env.QUILL_MODELS_DIR }}
-          key: quill-models-parakeet-v3-5793d0fd-silero-9e2449e1
+          key: quill-models-parakeet-v3-5793d0fd-silero-9e2449e1-testwav
 
       - name: Download and verify the speech models
         if: steps.models.outputs.cache-hit != 'true'
@@ -66,11 +67,16 @@ jobs:
           echo "5793d0fd397c5778d2cf2126994d58e9d56b1be7c04d13c7a15bb1b4eafb16bf  $work/$model.tar.bz2" | sha256sum -c -
           tar -xjf "$work/$model.tar.bz2" -C "$QUILL_MODELS_DIR/parakeet-tdt-0.6b-v3-int8" \
             --strip-components=1 --wildcards \
-            '*/encoder.int8.onnx' '*/decoder.int8.onnx' '*/joiner.int8.onnx' '*/tokens.txt'
+            '*/encoder.int8.onnx' '*/decoder.int8.onnx' '*/joiner.int8.onnx' '*/tokens.txt' \
+            '*/test_wavs/en.wav'
           ls -l "$QUILL_MODELS_DIR" "$QUILL_MODELS_DIR/parakeet-tdt-0.6b-v3-int8"
 
       - name: Install the server
         run: pip install -e "server[dev]"
+
+      # The bot tests drive a real headless Chromium through Playwright.
+      - name: Install Chromium for the bot tests
+        run: python -m playwright install --with-deps chromium
 
       - name: Download the Granola OpenAPI document
         continue-on-error: true
